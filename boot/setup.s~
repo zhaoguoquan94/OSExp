@@ -1,0 +1,199 @@
+!  
+!   setup.s     (C) 1991 Linus Torvalds  
+!  
+! setup.s is responsible for getting the system data from the BIOS,  
+           !  AND       PUTTING THEM INTO THE APPROPRIATE PLACES IN SYSTEM MEMORY.  
+! both setup.s and system has been loaded by the bootblock.  
+!  
+! This code asks the bios for memory/disk/other parameters, and  
+! puts them in a "safe" place: 0x90000-0x901FF, ie where the  
+! boot-block used to be. It is then up to the protected mode  
+! system to read them from there before the area is overwritten  
+           !  FOR       BUFFER-BLOCKS.  
+!  
+  
+! NOTE! These had better be the same as in bootsect.s!  
+  
+     INITSEG  =         0X9000  ! WE MOVE BOOT HERE - OUT OF THE WAY  
+      SYSSEG  =         0X1000  ! SYSTEM LOADED AT 0X10000 (65536).  
+    SETUPSEG  =         0X9020  ! THIS IS THE CURRENT SEGMENT  
+  
+.globl begtext, begdata, begbss, endtext, enddata, endbss  
+.text  
+    begtext:  
+.DATA  
+    begdata:  
+.bss  
+     begbss:  
+.text  
+  
+entry start  
+      start:  
+  
+!print the message which wing edit  
+   
+              MOV       AX,#SETUPSEG  
+              MOV       ES,AX  
+              MOV       AH,#0X03  
+              XOR       BH,BH  
+              INT       0X10  
+  
+              MOV       CX,#25  
+              MOV       BX,#0X0007  
+              MOV       BP,#MSG_HELLOW  
+              MOV       AX,#0X1301  
+              INT       0X10  
+  
+  
+! ok, the read went well so we get current cursor position and save it for  
+! posterity.  
+  
+              MOV       AX,#INITSEG ! THIS IS DONE IN BOOTSECT ALREADY, BUT...  
+              MOV       DS,AX  
+              MOV       AH,#0X03    ! READ CURSOR POS  
+              XOR       BH,BH  
+              INT       0X10        ! SAVE IT IN KNOWN PLACE, CON_INIT FETCHES  
+              MOV       [0],DX      ! IT FROM 0X90000.  
+  
+! Get memory size (extended mem, kB)  
+  
+              MOV       AH,#0X88  
+              INT       0X15  
+              MOV       [2],AX  
+  
+! Get video-card data:  
+  
+              MOV       AH,#0X0F  
+              INT       0X10  
+              MOV       [4],BX      ! BH = DISPLAY PAGE  
+              MOV       [6],AX      ! AL = VIDEO MODE, AH = WINDOW WIDTH  
+            
+! check for EGA/VGA and some config parameters  
+  
+              MOV       AH,#0X12  
+              MOV       BL,#0X10  
+              INT       0X10  
+              MOV       [8],AX  
+              MOV       [10],BX  
+              MOV       [12],CX  
+  
+          
+! Get hd0 data  
+  
+              MOV       AX,#0X0000  
+              MOV       DS,AX  
+              LDS       SI,[4*0X41]  
+              MOV       AX,#INITSEG  
+              MOV       ES,AX  
+              MOV       DI,#0X0080  
+              MOV       CX,#0X10  
+              REP  
+              MOVSB  
+  
+! Get hd1 data  
+  
+              MOV       AX,#0X0000  
+              MOV       DS,AX  
+              LDS       SI,[4*0X46]  
+              MOV       AX,#INITSEG  
+              MOV       ES,AX  
+              MOV       DI,#0X0090  
+              MOV       CX,#0X10  
+              REP  
+              MOVSB  
+  
+              MOV       AX,#SETUPSEG  
+              MOV       DS,AX  
+              MOV       ES,AX  
+  
+! print some datas about the hardware:  
+! print the cursor position  
+    
+          mov   ah,#0x03        ! read cursor pos  
+          xor       bh,bh  
+          int       0x10  
+      
+              MOV       CX,#25  
+              mov       bx,#0x0007      ! page 0, attribute 7 (normal)  
+              MOV       BP,#MSG_CURSOR  
+              MOV       AX,#0X1301      ! WRITE STRING, MOVE CURSOR  
+              INT       0X10  
+              
+              MOV       AX,#INITSEG  
+              MOV       DS,AX   !SET THE DATA SEG ADDRESS, EVEN IT HAS BEEN SET.  
+                    
+              MOV       CX,#4  
+              MOV       DX,[0]  
+     PRINT_DIGIT1:             !print the data  
+              ROL       DX,#4  
+              MOV       AX,#0XE0F  
+              AND       AL,DL  
+              ADD       AL,#0X30  
+              CMP       AL,#0X3A  
+              JL        OUTP1  
+              ADD       AL, #0X07  
+       OUTP1:  
+              INT       0X10  
+              LOOP      PRINT_DIGIT1  
+                
+              ! MOV       AX,#SETUPSEG  
+              ! MOV       DS,AX  
+              ! MOV       ES,AX  
+                
+!print size of the extended memory:  
+  
+              mov   ah,#0x03        ! read cursor pos  
+          xor       bh,bh  
+          int       0x10  
+             
+              MOV       CX,#37  
+              mov   bx,#0x0007      ! page 0, attribute 7 (normal)  
+              MOV       BP,#MSG_MEMORY  
+              MOV       AX,#0X1301      ! WRITE STRING, MOVE CURSOR  
+                
+              INT       0X10  
+          MOV       AX,#INITSEG  
+              MOV       DS,AX   !SET THE DATA SEG ADDRESS, EVEN IT HAS BEEN SET.  
+                    
+              MOV       CX,#4  
+              MOV       DX,[2]  
+            PRINT_DIGIT2:  
+              ROL       DX,#4  
+              MOV       AX,#0XE0F  
+              AND       AL,DL  
+              ADD       AL,#0X30  
+              CMP       AL,#0X3A  
+              JL        OUTP2  
+              ADD       AL, #0X07  
+       OUTP2:  
+              INT       0X10  
+              LOOP      PRINT_DIGIT2      
+                
+! change the line:  
+    
+print_nl:      
+              mov       ax,#0xe0d  
+              int       0x10  
+              mov       al,#0xa  
+              int       0x10  
+   
+  
+MSG_HELLOW:  
+        .byte 13,10  
+    .ascii "We are in setup ou Qin~"  
+    .byte 13,10,13,10  
+     
+MSG_CURSOR:  
+    .byte 13,10  
+    .ascii "the cursor position is:"  
+        
+MSG_MEMORY:  
+        .byte 13,10  
+        .ascii "the size of the extended memory is:"  
+      
+.text  
+    endtext:  
+.DATA  
+   enddata:  
+.bss  
+     endbss:
