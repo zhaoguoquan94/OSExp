@@ -175,7 +175,7 @@ void sleep_on(struct task_struct **p)
 	schedule();
 	if (tmp){
 		tmp->state=TASK_RUNNING;
-		fprintk(3,"%ld\t%c\t%ld\n",current->pid,'J',jiffies);
+		fprintk(3,"%ld\t%c\t%ld\n",tmp->pid,'J',jiffies);
 	}
 }
 

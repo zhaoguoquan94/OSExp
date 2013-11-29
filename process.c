@@ -29,6 +29,9 @@ int main(int argc, char * argv[])
 	else{
 		printf("father process is running...\n");
 		printf("father pid=%d\nprocess1's pid=%d\nprocess2's pid=%d\nprocess3's pid=%d\nprocess4's pid=%d\n",getpid(),process1,process2,process3,process4);
+		wait(NULL);		//书上说wait函数等待某个子进程退出，在这之前一直挂起。因此可以设置多个wait函数让父进程等待所有子进程结束之后再结束
+		wait(NULL);		//其实还可以使用waitpid（）函数，但是比较复杂不太会用……试了一下老是出错
+		wait(NULL);
 		wait(NULL);
 	}
 	
