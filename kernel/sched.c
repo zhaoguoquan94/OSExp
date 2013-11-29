@@ -139,9 +139,9 @@ void schedule(void)
 				(*p)->counter = ((*p)->counter >> 1) +
 						(*p)->priority;
 	}
-	if(current->state==TASK_RUNNING&&current!=task[next]){
-		fprintk(3,"%ld\t%c\t%ld\n",current->pid,'J',jiffies);
-	}
+	// if(current->state==TASK_RUNNING&&current!=task[next]){
+	// 	fprintk(3,"%ld\t%c\t%ld\n",current->pid,'J',jiffies);
+	// }
 	if(current!=task[next]){
 		fprintk(3,"%ld\t%c\t%ld\n",task[next]->pid,'R',jiffies);
 	}
