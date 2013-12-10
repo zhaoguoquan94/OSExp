@@ -90,7 +90,7 @@ int copy_process(int nr,long ebp,long edi,long esi,long gs,long none,
 	p->utime = p->stime = 0;
 	p->cutime = p->cstime = 0;
 	p->start_time = jiffies;
-	fprintk(3,"%ld\t%c\t%ld\n",last_pid,'N',jiffies);
+	fprintk(3,"%ld\t%c\t%ld\n",last_pid,'N',jiffies);/*code all above is copying the father process infomation,so print the information that a new process is going to be initialiazed*/
 	p->tss.back_link = 0;
 	p->tss.esp0 = PAGE_SIZE + (long) p;
 	p->tss.ss0 = 0x10;
@@ -131,7 +131,7 @@ int copy_process(int nr,long ebp,long edi,long esi,long gs,long none,
 	set_tss_desc(gdt+(nr<<1)+FIRST_TSS_ENTRY,&(p->tss));
 	set_ldt_desc(gdt+(nr<<1)+FIRST_LDT_ENTRY,&(p->ldt));
 	p->state = TASK_RUNNING;	/* do this last, just in case */
-	fprintk(3,"%ld\t%c\t%ld\n",last_pid,'J',jiffies);
+	fprintk(3,"%ld\t%c\t%ld\n",last_pid,'J',jiffies);/*just in case too,make this thread status=0(TASK_RUNNING)*/
 	return last_pid;
 }
 

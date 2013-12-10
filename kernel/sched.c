@@ -101,9 +101,8 @@ void schedule(void)
             if (((*p)->signal & ~(_BLOCKABLE & (*p)->blocked)) &&   
             (*p)->state==TASK_INTERRUPTIBLE)   
               {   
-                (*p)->state=TASK_RUNNING;   
-                /*输出就绪的Log*/  
-                fprintk(3,"%ld\t%c\t%ld\n",(*p)->pid,'J',jiffies);   
+                (*p)->state=TASK_RUNNING;    
+                fprintk(3,"%ld\t%c\t%ld\n",(*p)->pid,'J',jiffies);  /*inthis function proper task is set to run later,so print log that this  process is ready*/
               }   
         }   
    
@@ -126,12 +125,10 @@ void schedule(void)
                 (*p)->counter = ((*p)->counter >> 1) +   
                         (*p)->priority;   
     }   
-    if(current->state == TASK_RUNNING && current != task[next])   
-        /*输出就绪的Log*/  
+    if(current->state == TASK_RUNNING && current != task[next])  
         fprintk(3,"%ld\t%c\t%ld\n",current->pid,'J',jiffies);   
     if(current != task[next])   
-        /*输出可运行的Log*/  
-        fprintk(3,"%ld\t%c\t%ld\n",task[next]->pid,'R',jiffies);   
+        fprintk(3,"%ld\t%c\t%ld\n",task[next]->pid,'R',jiffies);   /*in order not to print too much info that is all the SAME*/
     switch_to(next);           
 }   
    
