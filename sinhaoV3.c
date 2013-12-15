@@ -11,7 +11,7 @@ sem_t sem1,sem2,sem3; //声明两个信号量
 int file[501];
 int start=0;
 int end=-1;
-File *f;
+FILE *f;
 
 void pthreadProducer(void *arg); //声明两个线程函数
 void pthreadConsumer1(void *arg);
